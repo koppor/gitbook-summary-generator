@@ -1,7 +1,9 @@
+package io.github.vegito2002.gitbooksummarygenerator;
+
 import java.io.*;
 import java.util.*;
 
-public class Gen {
+public class App {
     /* Reserved file names to be excluded from the processing. Some will be
     handled specifically later. */
     static Set<String> reserved_names = new HashSet<> ();
@@ -27,7 +29,7 @@ public class Gen {
     /* Stores the relative path of the root folder: default to "." */
     String root_path;
 
-    public Gen (String initial_path, boolean b) {
+    public App(String initial_path, boolean b) {
         File root = null;
         try {
             root = new File (initial_path);
@@ -210,6 +212,6 @@ public class Gen {
         while (path.charAt (i) == '/')
             i++;
         path = path.substring (i);
-        new Gen (path, apply_filter);
+        new App(path, apply_filter);
     }
 }
