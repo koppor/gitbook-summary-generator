@@ -42,7 +42,7 @@ public class App {
         root_path = initial_path;
         apply_filter = b;
         // Do not include files like .DS_store, which are usually implicit files.
-        File[] files = root.listFiles((d, name) -> !reserved_names.contains(name) && !name.startsWith("."));
+        File[] files = root.listFiles((d, name) -> !reserved_names.contains(name) && !name.startsWith(".") && (!name.contains(".") || name.endsWith(".md") || name.contains("..")));
         // Just a reminder that you should have a README.md there for your book
         if (!new File(initial_path, "README.md").exists()) {
             System.err.printf("Serious WARNING: make sure you at least have README.md in the folder. If you don't have one yet, create one after the processing.\n");
@@ -73,7 +73,7 @@ public class App {
      * @param indent:     backtracking indentation for SUMMARY.md indentation
      * @return The proportion in SUMMARY.md that corresponds to this file
      */
-    String process(File input_file, StringBuilder path, StringBuilder indent) {
+    private String process(File input_file, StringBuilder path, StringBuilder indent) {
         String input_file_name = input_file.getName(), split_name = splitName(input_file_name);
         if (DEBUG) System.out.printf("%sfile:(%s), path:(%s)\n", indent.toString(), input_file_name, path.toString());
         // Recurse in case this is a directory
@@ -87,7 +87,7 @@ public class App {
             for (File file : files) {
                 if (!has_readme && file.getName().equals("README.md"))
                     has_readme = true;
-                if (file.getName().startsWith("."))
+                if (file.getName().startsWith(".") || !file.getName().endsWith(".md"))
                     continue;
                 // recurse down in a backtracking manner
                 int path_old_len = path.length();
@@ -97,12 +97,20 @@ public class App {
                 path.setLength(path_old_len);
                 indent.setLength(indent.length() - 4);
             }
-            return String.format("%s* [%s](%s)\n", indent, split_name, has_readme ? (path.toString() + split_name + "/README.md").substring(root_path.length() + 1) : "") + res.toString();
+            if (indent.length() == 0) {
+                String result = "\n## " + split_name + "\n\n";
+                if (has_readme) {
+                    result += "* [Overview](" + (path.toString() + split_name + "/README.md").substring(root_path.length() + 1) + ")\n";
+                }
+                return result + res.toString();
+            } else {
+                return String.format("%s* [%s](%s)\n", indent.substring(4), split_name, has_readme ? (path.toString() + split_name + "/README.md").substring(root_path.length() + 1) : "") + res.toString();
+            }
         }
         // Base case: process a file (not a directory)
         String full_path = path.toString() + input_file_name;
         if (!input_file_name.equals("README.md"))
-            res.append(String.format("%s* [%s](%s)\n", indent, split_name, full_path.substring(root_path.length() + 1)));
+            res.append(String.format("%s* [%s](%s)\n", indent.substring(4), split_name, full_path.substring(root_path.length() + 1)));
         // actually process the file content text if requested by user
         if (apply_filter) {
             StringBuilder processed_content = new StringBuilder();
