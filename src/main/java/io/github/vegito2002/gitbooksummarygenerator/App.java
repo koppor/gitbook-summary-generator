@@ -1,7 +1,13 @@
 package io.github.vegito2002.gitbooksummarygenerator;
 
 import java.io.*;
+import java.nio.charset.Charset;
 import java.util.*;
+import java.util.stream.Collectors;
+
+import com.google.common.io.CharSource;
+import com.google.common.io.Files;
+import com.jcabi.log.Logger;
 
 public class App {
     /* Reserved file names to be excluded from the processing. Some will be
@@ -42,7 +48,7 @@ public class App {
         root_path = initial_path;
         apply_filter = b;
         // Do not include files like .DS_store, which are usually implicit files.
-        File[] files = root.listFiles((d, name) -> !reserved_names.contains(name) && !name.startsWith(".") && (!name.contains(".") || name.endsWith(".md") || name.contains("..")));
+        List<File> files = Arrays.stream(root.listFiles((d, name) -> !reserved_names.contains(name) && !name.startsWith(".") && (!name.contains(".") || name.endsWith(".md") || name.contains("..")))).sorted().collect(Collectors.toList());
         // Just a reminder that you should have a README.md there for your book
         if (!new File(initial_path, "README.md").exists()) {
             System.err.printf("Serious WARNING: make sure you at least have README.md in the folder. If you don't have one yet, create one after the processing.\n");
@@ -59,8 +65,7 @@ public class App {
         try (BufferedWriter bw = new BufferedWriter(new FileWriter(root_path + "/" + "SUMMARY.md", false))) {
             bw.write(summary.toString());
         } catch (Exception ex) {
-            System.err.printf("Can't write to SUMMARY.md\n");
-            System.exit(1);
+            Logger.error(this, "Can't write to SUMMARY.md");
         }
     }
 
@@ -74,7 +79,7 @@ public class App {
      * @return The proportion in SUMMARY.md that corresponds to this file
      */
     private String process(File input_file, StringBuilder path, StringBuilder indent) {
-        String input_file_name = input_file.getName(), split_name = splitName(input_file_name);
+        String input_file_name = input_file.getName();
         if (DEBUG) System.out.printf("%sfile:(%s), path:(%s)\n", indent.toString(), input_file_name, path.toString());
         // Recurse in case this is a directory
         StringBuilder res = new StringBuilder();
@@ -97,20 +102,22 @@ public class App {
                 path.setLength(path_old_len);
                 indent.setLength(indent.length() - 4);
             }
+            String heading = has_readme ? generateHeading(input_file.toPath().resolve("README.md").toFile()) : generateHeading(input_file);
             if (indent.length() == 0) {
-                String result = "\n## " + split_name + "\n\n";
+                String result = "\n## " + heading + "\n\n";
                 if (has_readme) {
-                    result += "* [Overview](" + (path.toString() + split_name + "/README.md").substring(root_path.length() + 1) + ")\n";
+                    result += "* [Overview](" + (path.toString() + input_file_name + "/README.md").substring(root_path.length() + 1) + ")\n";
                 }
                 return result + res.toString();
             } else {
-                return String.format("%s* [%s](%s)\n", indent.substring(4), split_name, has_readme ? (path.toString() + split_name + "/README.md").substring(root_path.length() + 1) : "") + res.toString();
+                return String.format("%s* [%s](%s)\n", indent.substring(4), heading, has_readme ? (path.toString() + "/README.md").substring(root_path.length() + 1) : "") + res.toString();
             }
         }
         // Base case: process a file (not a directory)
+        String heading = generateHeading(input_file);
         String full_path = path.toString() + input_file_name;
         if (!input_file_name.equals("README.md"))
-            res.append(String.format("%s* [%s](%s)\n", indent.substring(4), split_name, full_path.substring(root_path.length() + 1)));
+            res.append(String.format("%s* [%s](%s)\n", indent.substring(4), heading, full_path.substring(root_path.length() + 1)));
         // actually process the file content text if requested by user
         if (apply_filter) {
             StringBuilder processed_content = new StringBuilder();
@@ -155,6 +162,23 @@ public class App {
             }
         }
         return res.toString();
+    }
+
+    private String generateHeading(File input_file) {
+        Logger.debug(this, "treating %s", input_file.getName());
+        try {
+            CharSource charSource = Files.asCharSource(input_file, Charset.forName("UTF-8"));
+            String firstLine = charSource.readFirstLine();
+            if (firstLine.length() <= 3) {
+                Logger.error(this, "Line length below 4 for first line in file %s. True heading?", input_file.getName());
+                return this.splitName(input_file.getName());
+            }
+            String result = firstLine.substring(2);
+            return result;
+        } catch (IOException e) {
+            // fallback: split the file name
+            return this.splitName(input_file.getName());
+        }
     }
 
     /**

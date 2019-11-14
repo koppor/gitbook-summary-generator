@@ -21,8 +21,9 @@ repositories {
 }
 
 dependencies {
-    // This dependency is used by the application.
-    implementation 'com.google.guava:guava:28.0-jre'
+    implementation 'com.google.guava:guava:28.1-jre'
+    implementation 'com.jcabi:jcabi-log:0.17.4'
+    implementation group: 'org.slf4j', name: 'slf4j-jdk14', version: '1.7.29'
 
     // Use JUnit Jupiter API for testing.
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.4.2'
