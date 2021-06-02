@@ -1,12 +1,12 @@
 package io.github.vegito2002.gitbooksummarygenerator;
 
 import java.io.*;
-import java.nio.charset.Charset;
+import java.nio.file.Files;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-import com.google.common.io.CharSource;
-import com.google.common.io.Files;
 import com.jcabi.log.Logger;
 
 public class App {
@@ -167,14 +167,14 @@ public class App {
     private String generateHeading(File input_file) {
         Logger.debug(this, "treating %s", input_file.getName());
         try {
-            CharSource charSource = Files.asCharSource(input_file, Charset.forName("UTF-8"));
-            String firstLine = charSource.readFirstLine();
-            if (firstLine.length() <= 3) {
-                Logger.error(this, "Line length below 4 for first line in file %s. True heading?", input_file.getName());
+            String contents = Files.readString(input_file.toPath());
+            Pattern pattern = Pattern.compile("# (.*)");
+            Matcher matcher = pattern.matcher(contents);
+            if (matcher.find()) {
+                return matcher.group(1).trim();
+            } else {
                 return this.splitName(input_file.getName());
             }
-            String result = firstLine.substring(2);
-            return result;
         } catch (IOException e) {
             // fallback: split the file name
             return this.splitName(input_file.getName());
