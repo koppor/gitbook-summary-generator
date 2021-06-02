@@ -2,7 +2,12 @@
 
 This is a simple script that can turn any directory in your repo into a base folder for your Gitbook.
 
+Quick start:
+
+    gradlew run --args="Fullpath true"
+
 ## What Does This Do?
+
 [Gitbook](https://www.gitbook.com/) is very useful for writers, or programmers that sometimes write. 
 
 ### Getting it to run now
