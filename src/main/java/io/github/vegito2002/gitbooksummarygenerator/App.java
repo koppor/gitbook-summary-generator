@@ -116,8 +116,13 @@ public class App {
         // Base case: process a file (not a directory)
         String heading = generateHeading(input_file);
         String full_path = path.toString() + input_file_name;
-        if (!input_file_name.equals("README.md"))
-            res.append(String.format("%s* [%s](%s)\n", indent.substring(4), heading, full_path.substring(root_path.length() + 1)));
+        if (!input_file_name.equals("README.md")) {
+            String id = "  ";
+            if (indent.length() > 4) {
+                id = indent.substring(4);
+            }
+            res.append(String.format("%s* [%s](%s)\n", id, heading, full_path.substring(root_path.length() + 1)));
+        }
         // actually process the file content text if requested by user
         if (apply_filter) {
             StringBuilder processed_content = new StringBuilder();
