@@ -84,6 +84,21 @@ public class App {
         // Recurse in case this is a directory
         StringBuilder res = new StringBuilder();
         if (input_file.isDirectory()) {
+            try {
+                Files.list(input_file.toPath())
+                     .filter(p -> Files.isDirectory(p))
+                     .forEach(p -> {
+                         // recurse down in a backtracking manner
+                         int path_old_len = path.length();
+                         indent.append("    ");
+                         path.append(input_file_name + "/");
+                         res.append(process(p.toFile(), path, indent));
+                         path.setLength(path_old_len);
+                         indent.setLength(indent.length() - 4);
+                     });
+            } catch (IOException e) {
+                Logger.error(e, "Error during directory listing");
+            }
             File[] files = input_file.listFiles();
             /* For a directory, a README.md within acts as the cover of the Chapter/Part.
             When we traverse the directory's content, remember whether we found one.
@@ -105,10 +120,10 @@ public class App {
             String heading = has_readme ? generateHeading(input_file.toPath().resolve("README.md").toFile()) : generateHeading(input_file);
             if (indent.length() == 0) {
                 String result = "\n## " + heading + "\n\n";
-                if (has_readme) {
-                    result += "* [Overview](" + (path.toString() + input_file_name + "/README.md").substring(root_path.length() + 1) + ")\n";
-                }
-                return result + res.toString();
+                //if (has_readme) {
+                //    result += "* [Overview](" + (path.toString() + input_file_name + "/README.md").substring(root_path.length() + 1) + ")\n";
+                //}
+                return result + res;
             } else {
                 return String.format("%s* [%s](%s)\n", indent.substring(4), heading, has_readme ? (path.toString() + "/README.md").substring(root_path.length() + 1) : "") + res.toString();
             }
@@ -117,7 +132,7 @@ public class App {
         String heading = generateHeading(input_file);
         String full_path = path.toString() + input_file_name;
         if (!input_file_name.equals("README.md")) {
-            String id = "  ";
+            String id = "";
             if (indent.length() > 4) {
                 id = indent.substring(4);
             }
