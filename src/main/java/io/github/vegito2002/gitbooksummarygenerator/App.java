@@ -138,7 +138,7 @@ public final class App {
             } else {
                 newIndent = indent.substring(2);
             }
-            return String.format("%s* [%s](%s)\n", newIndent, heading, has_readme ? (pathToReadmeMd.toString()).substring(root_path.length() + 1) : "") + res;
+            return String.format("%s* [%s](%s)\n", newIndent, heading, has_readme ? (pathToReadmeMd.toString()).substring(root_path.length() + 1).replace('\\', '/') : "") + res;
         }
         // Base case: process a file (not a directory)
         String heading = generateHeading(input_file);
