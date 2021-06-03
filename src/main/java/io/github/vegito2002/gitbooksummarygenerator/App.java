@@ -96,18 +96,17 @@ public final class App {
                                 .map(p -> {
                                     // recurse down in a backtracking manner
                                     int path_old_len = path.length();
-                                    indent.append("  ");
+                                    //indent.append("  ");
                                     path.append(input_file_name + "/");
                                     String result = process(p.toFile(), path, indent);
                                     path.setLength(path_old_len);
-                                    indent.setLength(indent.length() - 2);
+                                    //indent.setLength(indent.length() - 2);
                                     return result;
                                 }).sorted()
                                 .collect(Collectors.joining()));
             } catch (IOException e) {
                 Logger.error(e, "Error during directory listing");
             }
-            indent.setLength(indent.length() - 2);
 
             // handle files contained in current directory
             File[] files = input_file.listFiles();
@@ -130,15 +129,11 @@ public final class App {
 
             res.append(items.stream().sorted().collect(Collectors.joining()));
 
+            indent.setLength(indent.length() - 2);
+
             Path pathToReadmeMd = input_file.toPath().resolve("README.md");
             String heading = has_readme ? generateHeading(pathToReadmeMd.toFile()) : generateHeading(input_file);
-            String newIndent;
-            if (indent.length() == 0) {
-                newIndent = "";
-            } else {
-                newIndent = indent.substring(2);
-            }
-            return String.format("%s* [%s](%s)\n", newIndent, heading, has_readme ? (pathToReadmeMd.toString()).substring(root_path.length() + 1).replace('\\', '/') : "") + res;
+            return String.format("%s* [%s](%s)\n", indent, heading, has_readme ? (pathToReadmeMd.toString()).substring(root_path.length() + 1).replace('\\', '/') : "") + res;
         }
         // Base case: process a file (not a directory)
         String heading = generateHeading(input_file);
