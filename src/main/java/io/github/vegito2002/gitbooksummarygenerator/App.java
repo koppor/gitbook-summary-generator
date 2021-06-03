@@ -9,7 +9,7 @@ import java.util.stream.Collectors;
 
 import com.jcabi.log.Logger;
 
-public class App {
+public final class App {
     /* Reserved file names to be excluded from the processing. Some will be
     handled specifically later. */
     static Set<String> reserved_names = new HashSet<>();
@@ -23,17 +23,20 @@ public class App {
     }
 
     /* Start boilerplate of the SUMMARY.md to be generated. */
-    static String SUMMARY_HEADER = "# Summary\n\n";
+    private final static String SUMMARY_HEADER = "# Summary\n\n";
+
     /* Stores whether the user wants the file content to be processed. See README
     for details. */
-    boolean apply_filter = false;
+    private static boolean apply_filter = false;
 
-    static String USAGE_INFO = "USAGE:\njava Gen [relative path of base folder root] [true/false: whether to apply file content processing]";
+    private final static String USAGE_INFO = "USAGE:\njava Gen [relative path of base folder root] [true/false: whether to apply file content processing]";
 
     /* Toggle for debug logging */
     boolean DEBUG = true;
+
     /* Stores regex pairs to process the file names */
     Map<String, String> matches;
+
     /* Stores the relative path of the root folder: default to "." */
     String root_path;
 
