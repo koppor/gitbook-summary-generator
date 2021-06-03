@@ -121,15 +121,13 @@ public final class App {
                 indent.setLength(indent.length() - 4);
             }
             String heading = has_readme ? generateHeading(input_file.toPath().resolve("README.md").toFile()) : generateHeading(input_file);
+            String newIndent;
             if (indent.length() == 0) {
-                String result = "\n## " + heading + "\n\n";
-                //if (has_readme) {
-                //    result += "* [Overview](" + (path.toString() + input_file_name + "/README.md").substring(root_path.length() + 1) + ")\n";
-                //}
-                return result + res;
+                newIndent = "";
             } else {
-                return String.format("%s* [%s](%s)\n", indent.substring(4), heading, has_readme ? (path.toString() + "/README.md").substring(root_path.length() + 1) : "") + res.toString();
+                newIndent = indent.substring(4);
             }
+            return String.format("%s* [%s](%s)\n", newIndent, heading, has_readme ? (path.toString() + File.separator + "README.md").substring(root_path.length() + 1) : "") + res;
         }
         // Base case: process a file (not a directory)
         String heading = generateHeading(input_file);
