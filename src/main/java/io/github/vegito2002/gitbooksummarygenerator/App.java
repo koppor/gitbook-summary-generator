@@ -205,7 +205,7 @@ public final class App {
 
     /**
      * Load the regex pairing from regex.md file. If not found, use the default handling of inserting a space where each
-     * caplitalized word begins. The regex pairing should be stored as alternating lines of pattern/seperator
+     * capitalized word begins. The regex pairing should be stored as alternating lines of pattern/separator
      *
      * @return a map that stores all regex pairing information
      */
@@ -261,7 +261,7 @@ public final class App {
                 }
                 path = args[0];
             }
-            if (i == 1 && args[1].toLowerCase().equals("true")) {
+            if (i == 1 && args[1].equalsIgnoreCase("true")) {
                 apply_filter = true;
             }
         }
