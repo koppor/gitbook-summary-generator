@@ -91,17 +91,19 @@ public final class App {
         if (input_file.isDirectory()) {
             indent.append("  ");
             try {
-                Files.list(input_file.toPath())
-                     .filter(p -> Files.isDirectory(p))
-                     .forEach(p -> {
-                         // recurse down in a backtracking manner
-                         int path_old_len = path.length();
-                         indent.append("  ");
-                         path.append(input_file_name + "/");
-                         res.append(process(p.toFile(), path, indent));
-                         path.setLength(path_old_len);
-                         indent.setLength(indent.length() - 2);
-                     });
+                res.append(Files.list(input_file.toPath())
+                                .filter(Files::isDirectory)
+                                .map(p -> {
+                                    // recurse down in a backtracking manner
+                                    int path_old_len = path.length();
+                                    indent.append("  ");
+                                    path.append(input_file_name + "/");
+                                    String result = process(p.toFile(), path, indent);
+                                    path.setLength(path_old_len);
+                                    indent.setLength(indent.length() - 2);
+                                    return result;
+                                }).sorted()
+                                .collect(Collectors.joining()));
             } catch (IOException e) {
                 Logger.error(e, "Error during directory listing");
             }
@@ -113,6 +115,7 @@ public final class App {
             When we traverse the directory's content, remember whether we found one.
             This would affect the line appended to SUMMARY.md. */
             boolean has_readme = false;
+            List<String> items = new ArrayList<>();
             for (File file : files) {
                 if (!has_readme && file.getName().equals("README.md"))
                     has_readme = true;
@@ -121,9 +124,12 @@ public final class App {
                 // recurse down in a backtracking manner
                 int path_old_len = path.length();
                 path.append(input_file_name + "/");
-                res.append(process(file, path, indent));
+                items.add(process(file, path, indent));
                 path.setLength(path_old_len);
             }
+
+            res.append(items.stream().sorted().collect(Collectors.joining()));
+
             Path pathToReadmeMd = input_file.toPath().resolve("README.md");
             String heading = has_readme ? generateHeading(pathToReadmeMd.toFile()) : generateHeading(input_file);
             String newIndent;
