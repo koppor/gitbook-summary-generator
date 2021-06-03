@@ -2,6 +2,7 @@ package io.github.vegito2002.gitbooksummarygenerator;
 
 import java.io.*;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -51,7 +52,8 @@ public final class App {
         root_path = initial_path;
         apply_filter = b;
         // Do not include files like .DS_store, which are usually implicit files.
-        List<File> files = Arrays.stream(root.listFiles((d, name) -> !reserved_names.contains(name) && !name.startsWith(".") && (!name.contains(".") || name.endsWith(".md") || name.contains("..")))).sorted().collect(Collectors.toList());
+        List<File> files = Arrays.stream(root.listFiles((d, name) -> !reserved_names.contains(name) && !name.startsWith(".") && (!name.contains(".") || name.endsWith(".md") || name.contains(".."))))
+                                 .sorted().collect(Collectors.toList());
         // Just a reminder that you should have a README.md there for your book
         if (!new File(initial_path, "README.md").exists()) {
             System.err.printf("Serious WARNING: make sure you at least have README.md in the folder. If you don't have one yet, create one after the processing.\n");
@@ -87,21 +89,25 @@ public final class App {
         // Recurse in case this is a directory
         StringBuilder res = new StringBuilder();
         if (input_file.isDirectory()) {
+            indent.append("  ");
             try {
                 Files.list(input_file.toPath())
                      .filter(p -> Files.isDirectory(p))
                      .forEach(p -> {
                          // recurse down in a backtracking manner
                          int path_old_len = path.length();
-                         indent.append("    ");
+                         indent.append("  ");
                          path.append(input_file_name + "/");
                          res.append(process(p.toFile(), path, indent));
                          path.setLength(path_old_len);
-                         indent.setLength(indent.length() - 4);
+                         indent.setLength(indent.length() - 2);
                      });
             } catch (IOException e) {
                 Logger.error(e, "Error during directory listing");
             }
+            indent.setLength(indent.length() - 2);
+
+            // handle files contained in current directory
             File[] files = input_file.listFiles();
             /* For a directory, a README.md within acts as the cover of the Chapter/Part.
             When we traverse the directory's content, remember whether we found one.
@@ -114,30 +120,25 @@ public final class App {
                     continue;
                 // recurse down in a backtracking manner
                 int path_old_len = path.length();
-                indent.append("    ");
                 path.append(input_file_name + "/");
                 res.append(process(file, path, indent));
                 path.setLength(path_old_len);
-                indent.setLength(indent.length() - 4);
             }
-            String heading = has_readme ? generateHeading(input_file.toPath().resolve("README.md").toFile()) : generateHeading(input_file);
+            Path pathToReadmeMd = input_file.toPath().resolve("README.md");
+            String heading = has_readme ? generateHeading(pathToReadmeMd.toFile()) : generateHeading(input_file);
             String newIndent;
             if (indent.length() == 0) {
                 newIndent = "";
             } else {
-                newIndent = indent.substring(4);
+                newIndent = indent.substring(2);
             }
-            return String.format("%s* [%s](%s)\n", newIndent, heading, has_readme ? (path.toString() + File.separator + "README.md").substring(root_path.length() + 1) : "") + res;
+            return String.format("%s* [%s](%s)\n", newIndent, heading, has_readme ? (pathToReadmeMd.toString()).substring(root_path.length() + 1) : "") + res;
         }
         // Base case: process a file (not a directory)
         String heading = generateHeading(input_file);
         String full_path = path.toString() + input_file_name;
         if (!input_file_name.equals("README.md")) {
-            String id = "";
-            if (indent.length() > 4) {
-                id = indent.substring(4);
-            }
-            res.append(String.format("%s* [%s](%s)\n", id, heading, full_path.substring(root_path.length() + 1)));
+            res.append(String.format("%s* [%s](%s)\n", indent, heading, full_path.substring(root_path.length() + 1)));
         }
         // actually process the file content text if requested by user
         if (apply_filter) {
